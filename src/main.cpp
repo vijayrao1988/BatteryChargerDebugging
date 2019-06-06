@@ -15,7 +15,7 @@
 
 #include <Arduino.h>
 #include <Wire.h>
-
+#define READING_INTERVAL 5000 //this value is in milliseconds
 
 void setup() {
   // put your setup code here, to run once:
@@ -24,7 +24,7 @@ void setup() {
   pinMode(13, OUTPUT); //User pin13 as a on-board diagnostic output
   Serial.println("BATTERY MANAGEMENT MONITOR");
 
-
+/*
   //////
   //0x14
   //Serial.println("Sending 0x15 to write Input Current Limits Register");
@@ -39,7 +39,7 @@ void setup() {
   Wire.beginTransmission(0x68); //SLA
   Wire.write(0x1A); //
   Wire.write(0x1F); //
-  Wire.endTransmission(); //STOP
+  Wire.endTransmission(); //STOP*/
 }
 
 void loop() {
@@ -117,6 +117,37 @@ void loop() {
   Wire.write(0x1A); //
   Wire.endTransmission(); //STOP
   Wire.requestFrom(0x68, 1);    // request 1 byte from slave device 0x68
+  while(Wire.available())    // slave may send less than requested
+  {
+    //Serial.print("Number of bytes read = ");
+    //Serial.println(Wire.available());
+    char reading = Wire.read();    // receive a byte as character
+    char index = 7;
+    unsigned char Mask = 0x80;
+    char bitValue = 0;
+
+    for(index=7; index>=0; index--)
+    {
+      bitValue = reading & Mask;
+      if (bitValue)
+        Serial.print('1');
+      else
+        Serial.print('0');
+      Mask = Mask >> 1;
+
+    }
+  }
+  Serial.println("");
+
+
+  //////
+  //0x31
+  //Serial.println("Sending 0x34 to read Charger State");
+  Serial.print(":31:");
+  Wire.beginTransmission(0x68); //SLA
+  Wire.write(0x31); //
+  Wire.endTransmission(); //STOP
+  Wire.requestFrom(0x68, 2);    // request 1 byte from slave device 0x68
   while(Wire.available())    // slave may send less than requested
   {
     //Serial.print("Number of bytes read = ");
@@ -548,5 +579,5 @@ void loop() {
 
   Serial.println(":FF:"); //End of data
   Serial.println("");
-  delay(5000);
+  delay(READING_INTERVAL);
 }
